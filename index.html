@@ -1,18 +1,207 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        button{
-    background-color: greenyellow;
-    padding: 4px;
-    border-radius: 20px;
-}
-    </style>
-    <title>WIFIHACK - Yaman IP Hack tool</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modal with Tabs, Icons & Validation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .fade-slide-in { animation: fadeSlideIn 0.3s ease-out forwards; }
+    .fade-slide-out { animation: fadeSlideOut 0.2s ease-in forwards; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes fadeSlideOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    }
+  </style>
 </head>
-<body>
-    <button onclick="hackDNS()">Check IP Addresses</button>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen transition">
+
+  <!-- Toggle Dark Mode -->
+  <div class="absolute top-4 right-4">
+    <button onclick="toggleDarkMode()" class="px-4 py-2 bg-gray-800 dark:bg-white text-white dark:text-gray-800 rounded-full shadow">
+      Toggle Mode
+    </button>
+  </div>
+
+  <!-- Open Modal -->
+  <button onclick="openModal()" class="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition">
+    Open Modal
+  </button>
+
+  <!-- Modal Overlay -->
+  <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm hidden items-center justify-center z-50">
+    <!-- Modal Box -->
+    <div id="modalBox" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full max-w-lg p-6 rounded-2xl shadow-2xl fade-slide-in relative">
+      <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 dark:text-gray-300 hover:text-red-500 text-xl font-bold">&times;</button>
+
+      <!-- Tabs -->
+      <div class="flex justify-center space-x-4 mb-4 text-sm font-medium">
+        <button class="tab-btn flex items-center gap-1 hover:bg-blue-100 dark:hover:bg-gray-700 px-3 py-1 rounded" onclick="showTab('login')">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Login
+        </button>
+        <button class="tab-btn flex items-center gap-1 hover:bg-blue-100 dark:hover:bg-gray-700 px-3 py-1 rounded" onclick="showTab('signup')">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Signup
+        </button>
+        <button class="tab-btn flex items-center gap-1 hover:bg-blue-100 dark:hover:bg-gray-700 px-3 py-1 rounded" onclick="showTab('feedback')">
+          <i data-lucide="message-square" class="w-4 h-4"></i> Feedback
+        </button>
+      </div>
+
+      <!-- Login Tab -->
+      <form class="tab-content" id="login" onsubmit="return validateLogin(event); handleSubmit(event)">
+        <h2 class="text-xl font-semibold mb-2">Login</h2>
+        <input class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" type="email" id="loginEmail" placeholder="Email" required>
+        <input class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Log In</button>
+      </form>
+
+      <!-- Signup Tab -->
+      <form class="tab-content hidden" id="signup" onsubmit="return validateSignup(event)">
+        <h2 class="text-xl font-semibold mb-2">Signup</h2>
+        <input class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" type="text" id="signupName" placeholder="Name" required>
+        <input class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" type="email" id="signupEmail" placeholder="Email" required>
+        <input class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" type="password" id="signupPassword" placeholder="Password" required>
+        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Sign Up</button>
+      </form>
+
+      <!-- Feedback Tab -->
+      <form class="tab-content hidden" id="feedback" onsubmit="return validateFeedback(event)">
+        <h2 class="text-xl font-semibold mb-2">Feedback</h2>
+        <textarea class="w-full mb-2 p-2 rounded bg-gray-100 dark:bg-gray-700" rows="4" id="feedbackMessage" placeholder="Your feedback..." required></textarea>
+        <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("modalOverlay");
+    const modal = document.getElementById("modalBox");
+
+    function openModal() {
+      overlay.style.display = "flex";
+      modal.classList.remove("fade-slide-out");
+      modal.classList.add("fade-slide-in");
+      showTab('login');
+    }
+
+    function closeModal() {
+      modal.classList.remove("fade-slide-in");
+      modal.classList.add("fade-slide-out");
+      setTimeout(() => overlay.style.display = "none", 200);
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+    }
+
+    window.onclick = e => {
+      if (e.target === overlay) closeModal();
+    }
+
+    function validateLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      if (!email || !password) {
+        alert("Please fill out all login fields.");
+        return false;
+      }
+      alert("Login successful!");
+      closeModal();
+      return true;
+    }
+
+    function validateSignup(e) {
+      e.preventDefault();
+      const name = document.getElementById("signupName").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value.trim();
+      if (!name || !email || !password) {
+        alert("Please fill out all signup fields.");
+        return false;
+      }
+      alert("Signup successful!");
+      closeModal();
+      return true;
+    }
+
+    function validateFeedback(e) {
+      e.preventDefault();
+      const message = document.getElementById("feedbackMessage").value.trim();
+      if (!message) {
+        alert("Please enter your feedback.");
+        return false;
+      }
+      alert("Feedback sent!");
+      closeModal();
+      return true;
+    }
+    // Initialize EmailJS with your user ID (you get this from EmailJS after signing up)
+emailjs.init("service_w046q7a");
+
+// Function to send email
+function sendEmail(formData) {
+  const templateParams = {
+    from_name: formData.name, // Sender's name (form field)
+    from_email: formData.email, // Sender's email (form field)
+    message: formData.message, // Message (form field)
+  };
+
+  // Send email using EmailJS
+  emailjs.send("service_w046q7a", "YOUR_TEMPLATE_ID", templateParams)
+    .then(function(response) {
+      console.log('SUCCESS!', response);
+      alert("Your message has been sent successfully!");
+    }, function(error) {
+      console.log('FAILED...', error);
+      alert("Sorry, something went wrong. Please try again.");
+    });
+}
+
+// Call this function on form submission
+function handleSubmit(event) {
+  event.preventDefault(); // Prevent default form submission
+  
+  const form = event.target;
+  const formData = {};
+
+  // Get form data
+  for (let el of form.elements) {
+    if (el.name) {
+      formData[el.name] = el.value.trim();
+    }
+  }
+
+  // Validate the form (optional)
+  if (!formData.name || !formData.email || !formData.message) {
+    alert('Please fill out all fields.');
+    return;
+  }
+
+  // Send email
+  sendEmail(formData);
+}
+
+    lucide.createIcons(); // Load Lucide icons
+  </script>
+
 </body>
 </html>
